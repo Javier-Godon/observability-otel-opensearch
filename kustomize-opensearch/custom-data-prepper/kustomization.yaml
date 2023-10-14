@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- data-prepper-deployment.yaml
+- data-prepper-configmap.yaml
+
+namespace: data-prepper
+
+
+
+    

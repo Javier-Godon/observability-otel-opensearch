@@ -1,0 +1,43 @@
+domain: opensearch.opster.io
+layout:
+- go.kubebuilder.io/v3
+projectName: opensearch-operator
+repo: opensearch.opster.io
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opensearch.opster.io
+  group: opster
+  kind: OpenSearchCluster
+  path: opensearch.opster.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opensearch.opster.io
+  group: opster
+  kind: OpensearchUser
+  path: opensearch.opster.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opensearch.opster.io
+  group: opster
+  kind: OpensearchRole
+  path: opensearch.opster.io/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opensearch.opster.io
+  group: opster
+  kind: OpensearchUserRoleBinding
+  path: opensearch.opster.io/api/v1
+  version: v1
+version: "3"

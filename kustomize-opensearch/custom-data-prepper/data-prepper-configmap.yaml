@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: data-prepper
+  name: data-prepper-config
+  namespace: data-prepper
+data:
+  pipelines.yaml: |
+    entry-pipeline:
+      delay: "100"
+      source:
+        otel_trace_source:
+          ssl: false
+      sink:
+        - pipeline:
+            name: "raw-pipeline"
+        - pipeline:
+            name: "service-map-pipeline"
+    raw-pipeline:
+      source:
+        pipeline:
+          name: "entry-pipeline"
+      processor:
+        - otel_traces:
+      sink:
+        - stdout:
+        - opensearch: 
+            hosts: [ "https://blue-opensearch-cluster.opensearch:9200" ]
+            index_type: trace-analytics-raw
+            username: "admin"
+            password: "admin"
+            insecure: true
+    service-map-pipeline:
+      delay: "100"
+      source:
+        pipeline:
+          name: "entry-pipeline"
+      processor:
+        - service_map_stateful:
+      sink:
+        - stdout:
+        - opensearch: 
+            hosts: [ "https://blue-opensearch-cluster.opensearch:9200" ]
+            index_type: trace-analytics-service-map
+            username: "admin"
+            password: "admin"
+            insecure: true
+    # log-fluent-pipeline:
+    #   source:
+    #     http:
+    #       ssl: false
+    #   # processor:
+    #   #   - grok:
+    #   #       match:
+    #   #         log: [ "%{COMMONAPACHELOG}" ]
+    #   sink:
+    #     - opensearch:
+    #         hosts: [ "https://blue-opensearch-cluster.opensearch:9200" ]
+    #         insecure: true
+    #         username: admin
+    #         password: admin
+    #         index: microservices_logs-%{yyyy.MM.dd}   
+    log-collector-pipeline:
+      source:
+        otel_logs_source:
+          port: 21892
+          ssl: false
+      # processor:
+      #   - grok:
+      #       match:
+      #         log: [ "%{COMMONAPACHELOG}" ]
+      sink:
+        - opensearch:
+            hosts: [ "https://blue-opensearch-cluster.opensearch:9200" ]
+            insecure: true
+            username: admin
+            password: admin
+            index_type: custom
+            index: microservices_otlp_logs-%{yyyy.MM.dd}
+    otel-metrics-pipeline:
+      delay: 3000
+      source:
+        otel_metrics_source:
+          port: 21891
+          health_check_service: true
+          ssl: false
+      buffer:
+        bounded_blocking:
+          buffer_size: 1024 # max number of records the buffer accepts
+          batch_size: 1024 # max number of records the buffer drains after each read
+      processor:
+        - otel_metrics:
+            calculate_histogram_buckets: true
+            calculate_exponential_histogram_buckets: true
+            exponential_histogram_max_allowed_scale: 10
+            flatten_attributes: false
+      sink:
+        - opensearch:
+            hosts: [ "https://blue-opensearch-cluster.opensearch:9200" ]
+            username: "admin"
+            password: "admin"  
+            insecure: true
+            index_type: custom
+            index: metrics-%{yyyy.MM.dd}
+            #max_retries: 20
+            bulk_size: 4                             
+  data-prepper-config.yaml: |
+    ssl: false
